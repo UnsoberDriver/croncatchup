@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/UnsoberDriver/debrouille/internal/human"
+	"github.com/UnsoberDriver/croncatchup/internal/human"
 )
 
 // Kind is the shape of a recurrence.

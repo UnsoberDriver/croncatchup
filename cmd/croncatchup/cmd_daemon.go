@@ -6,9 +6,9 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/UnsoberDriver/debrouille/internal/config"
-	"github.com/UnsoberDriver/debrouille/internal/daemon"
-	"github.com/UnsoberDriver/debrouille/internal/view"
+	"github.com/UnsoberDriver/croncatchup/internal/config"
+	"github.com/UnsoberDriver/croncatchup/internal/daemon"
+	"github.com/UnsoberDriver/croncatchup/internal/view"
 )
 
 func (a *app) cmdDaemon(args []string) error {

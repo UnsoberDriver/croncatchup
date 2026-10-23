@@ -11,15 +11,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/UnsoberDriver/debrouille/internal/conditions"
-	"github.com/UnsoberDriver/debrouille/internal/config"
-	"github.com/UnsoberDriver/debrouille/internal/human"
-	"github.com/UnsoberDriver/debrouille/internal/lock"
-	"github.com/UnsoberDriver/debrouille/internal/runner"
-	"github.com/UnsoberDriver/debrouille/internal/schedule"
-	"github.com/UnsoberDriver/debrouille/internal/state"
-	"github.com/UnsoberDriver/debrouille/internal/ui"
-	"github.com/UnsoberDriver/debrouille/internal/view"
+	"github.com/UnsoberDriver/croncatchup/internal/conditions"
+	"github.com/UnsoberDriver/croncatchup/internal/config"
+	"github.com/UnsoberDriver/croncatchup/internal/human"
+	"github.com/UnsoberDriver/croncatchup/internal/lock"
+	"github.com/UnsoberDriver/croncatchup/internal/runner"
+	"github.com/UnsoberDriver/croncatchup/internal/schedule"
+	"github.com/UnsoberDriver/croncatchup/internal/state"
+	"github.com/UnsoberDriver/croncatchup/internal/ui"
+	"github.com/UnsoberDriver/croncatchup/internal/view"
 )
 
 // Daemon owns the schedule and the state file.

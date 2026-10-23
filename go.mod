@@ -1,4 +1,4 @@
-module github.com/UnsoberDriver/debrouille
+module github.com/UnsoberDriver/croncatchup
 
 go 1.27.3
 

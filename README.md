@@ -1,12 +1,12 @@
-# wakeup
+# croncatchup
 
-[![CI](https://github.com/UnsoberDriver/wakeup/actions/workflows/ci.yml/badge.svg)](https://github.com/UnsoberDriver/wakeup/actions/workflows/ci.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/UnsoberDriver/wakeup)](https://goreportcard.com/report/github.com/UnsoberDriver/wakeup)
+[![CI](https://github.com/UnsoberDriver/croncatchup/actions/workflows/ci.yml/badge.svg)](https://github.com/UnsoberDriver/croncatchup/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/UnsoberDriver/croncatchup)](https://goreportcard.com/report/github.com/UnsoberDriver/croncatchup)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **Run missed jobs when your laptop wakes up.**
 
-If your laptop is closed, suspended, or powered off at the time `cron`, `anacron`, or a `systemd --user` timer was supposed to run, those jobs are simply skipped and never come back. `wakeup` fixes that.
+If your laptop is closed, suspended, or powered off at the time `cron`, `anacron`, or a `systemd --user` timer was supposed to run, those jobs are simply skipped and never come back. `croncatchup` fixes that.
 
 ## The problem
 
@@ -14,7 +14,7 @@ You set up `restic backup` for 03:00 every night. Your laptop sleeps at 02:00 an
 
 ## The solution
 
-`wakeup` keeps track of when each job *should* have run. When your machine comes back online/awake, it checks for missed runs and executes them — but only if they're still relevant.
+`croncatchup` keeps track of when each job *should* have run. When your machine comes back online/awake, it checks for missed runs and executes them — but only if they're still relevant.
 
 - **Catch up on wake** - Remembers due times across sleeps/reboots. Runs missed jobs as soon as conditions are met after waking up.
 - **Grace window** - If you haven't used your laptop in 7 days, you probably don't want 7 nightly backups firing all at once. Jobs older than `grace` are skipped and rescheduled to the next slot.
@@ -26,35 +26,35 @@ You set up `restic backup` for 03:00 every night. Your laptop sleeps at 02:00 an
 
 ```bash
 # With Go
-go install github.com/UnsoberDriver/wakeup/cmd/wakeup@latest
+go install github.com/UnsoberDriver/croncatchup/cmd/croncatchup@latest
 
 # Or build from source
-git clone https://github.com/UnsoberDriver/wakeup
-cd wakeup
-go build ./cmd/wakeup
+git clone https://github.com/UnsoberDriver/croncatchup
+cd croncatchup
+go build ./cmd/croncatchup
 ```
 
 ## Quick start
 
 ```bash
 # Create config
-mkdir -p ~/.config/wakeup
-cp example/config.toml ~/.config/wakeup/config.toml
-$EDITOR ~/.config/wakeup/config.toml
+mkdir -p ~/.config/croncatchup
+cp example/config.toml ~/.config/croncatchup/config.toml
+$EDITOR ~/.config/croncatchup/config.toml
 
 # Check conditions and config
-wakeup check --explain
+croncatchup check --explain
 
 # Test without starting the daemon
-wakeup daemon --once
+croncatchup daemon --once
 
 # Run as user service (auto-start on login)
-wakeup systemd > ~/.config/systemd/user/wakeup.service
+croncatchup systemd > ~/.config/systemd/user/croncatchup.service
 systemctl --user daemon-reload
-systemctl --user enable --now wakeup.service
+systemctl --user enable --now croncatchup.service
 
 # See status
-wakeup status
+croncatchup status
 ```
 
 ## Example config
@@ -93,23 +93,23 @@ See [example/config.toml](example/config.toml) for more options.
 
 | Command | What it does |
 | --- | --- |
-| `wakeup daemon` | Start the scheduler. Listens for `SIGHUP` to reload config. |
-| `wakeup daemon --once` | Evaluate all jobs once and exit (great for testing). |
-| `wakeup status` | Table of jobs: schedule, last run, next due, state (`ok`/`due`/`missed`/`failing`). |
-| `wakeup run <job> [--force]` | Run a job immediately. Respects conditions unless `--force`. Updates schedule as if it ran normally. |
-| `wakeup check [--explain]` | Validate config and show AC/battery/idle/network checks. |
-| `wakeup logs <job> [--tail N]` | View recent output from a job's log file. |
-| `wakeup systemd` | Generate a `systemd --user` unit file. |
+| `croncatchup daemon` | Start the scheduler. Listens for `SIGHUP` to reload config. |
+| `croncatchup daemon --once` | Evaluate all jobs once and exit (great for testing). |
+| `croncatchup status` | Table of jobs: schedule, last run, next due, state (`ok`/`due`/`missed`/`failing`). |
+| `croncatchup run <job> [--force]` | Run a job immediately. Respects conditions unless `--force`. Updates schedule as if it ran normally. |
+| `croncatchup check [--explain]` | Validate config and show AC/battery/idle/network checks. |
+| `croncatchup logs <job> [--tail N]` | View recent output from a job's log file. |
+| `croncatchup systemd` | Generate a `systemd --user` unit file. |
 
 ## How catch-up works
 
-1. **Track** - After each run, `wakeup` records `next_due` in `~/.local/state/wakeup/state.json` (atomically written).
+1. **Track** - After each run, `croncatchup` records `next_due` in `~/.local/state/croncatchup/state.json` (atomically written).
 2. **Miss** - If the daemon isn't running while asleep, `next_due` stays in the past.
 3. **Wake & check** - On next tick, it sees the job is due. It checks conditions (AC/idle/network/battery). If blocked, it waits and retries each tick.
 4. **Decide** - If `now - next_due <= grace` → run it (marked "caught up X late"). If `> grace` → skip and advance to the next slot without flooding runs.
 5. **Advance** - For intervals, next due is computed by steps from the previous slot (prevents drift). For daily/weekly, it finds the next occurrence in the future.
 
-State lives in `~/.local/state/wakeup/`, logs in `~/.local/state/wakeup/logs/`. Both are user-writable, no root needed.
+State lives in `~/.local/state/croncatchup/`, logs in `~/.local/state/croncatchup/logs/`. Both are user-writable, no root needed.
 
 ## License
 

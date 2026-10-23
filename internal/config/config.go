@@ -11,7 +11,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 
-	"github.com/UnsoberDriver/debrouille/internal/schedule"
+	"github.com/UnsoberDriver/croncatchup/internal/schedule"
 )
 
 // Duration is a time.Duration decoded from a TOML string such as "90m" or "2h".

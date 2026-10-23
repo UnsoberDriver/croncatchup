@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/UnsoberDriver/debrouille/internal/human"
-	"github.com/UnsoberDriver/debrouille/internal/view"
+	"github.com/UnsoberDriver/croncatchup/internal/human"
+	"github.com/UnsoberDriver/croncatchup/internal/view"
 )
 
 func (a *app) cmdStatus(args []string) error {

@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/UnsoberDriver/debrouille/internal/config"
-	"github.com/UnsoberDriver/debrouille/internal/human"
-	"github.com/UnsoberDriver/debrouille/internal/state"
+	"github.com/UnsoberDriver/croncatchup/internal/config"
+	"github.com/UnsoberDriver/croncatchup/internal/human"
+	"github.com/UnsoberDriver/croncatchup/internal/state"
 )
 
 // Headers are the status table columns.

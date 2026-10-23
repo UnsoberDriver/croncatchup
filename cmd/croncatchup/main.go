@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/UnsoberDriver/debrouille/internal/config"
-	"github.com/UnsoberDriver/debrouille/internal/state"
-	"github.com/UnsoberDriver/debrouille/internal/ui"
+	"github.com/UnsoberDriver/croncatchup/internal/config"
+	"github.com/UnsoberDriver/croncatchup/internal/state"
+	"github.com/UnsoberDriver/croncatchup/internal/ui"
 )
 
 // version is overridden at build time with -ldflags "-X main.version=...".

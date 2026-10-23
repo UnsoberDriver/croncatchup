@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/UnsoberDriver/debrouille/internal/conditions"
-	"github.com/UnsoberDriver/debrouille/internal/human"
+	"github.com/UnsoberDriver/croncatchup/internal/conditions"
+	"github.com/UnsoberDriver/croncatchup/internal/human"
 )
 
 func (a *app) cmdCheck(args []string) error {

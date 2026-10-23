@@ -1,5 +1,5 @@
-# Example debrouille configuration
-# Copy to ~/.config/debrouille/config.toml and edit to fit your setup.
+# Example croncatchup configuration
+# Copy to ~/.config/croncatchup/config.toml and edit to fit your setup.
 
 [settings]
 # How often the daemon evaluates jobs (default: 30s)
@@ -24,9 +24,9 @@ idle_for = "5m"
 network_check = "1.1.1.1:53"
 # Evaluate jobs immediately when the daemon starts (default: true)
 run_missed_on_start = true
-# Where to store state and logs (defaults follow XDG / ~/.local/state/debrouille)
-# state_dir = "~/.local/state/debrouille"
-# log_dir = "~/.local/state/debrouille/logs"
+# Where to store state and logs (defaults follow XDG / ~/.local/state/croncatchup)
+# state_dir = "~/.local/state/croncatchup"
+# log_dir = "~/.local/state/croncatchup/logs"
 
 # Nightly backup with restic. Catches up if the laptop was asleep.
 [[job]]

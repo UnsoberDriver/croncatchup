@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/UnsoberDriver/debrouille/internal/human"
+	"github.com/UnsoberDriver/croncatchup/internal/human"
 )
 
 // Requirements is what a job needs before it may start.

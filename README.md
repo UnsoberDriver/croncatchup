@@ -1,42 +1,60 @@
-# debrouille
+# wakeup
 
-[![CI](https://github.com/UnsoberDriver/debrouille/actions/workflows/ci.yml/badge.svg)](https://github.com/UnsoberDriver/debrouille/actions/workflows/ci.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/UnsoberDriver/debrouille)](https://goreportcard.com/report/github.com/UnsoberDriver/debrouille)
+[![CI](https://github.com/UnsoberDriver/wakeup/actions/workflows/ci.yml/badge.svg)](https://github.com/UnsoberDriver/wakeup/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/UnsoberDriver/wakeup)](https://goreportcard.com/report/github.com/UnsoberDriver/wakeup)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A catch-up scheduler for machines that sleep.
+**Run missed jobs when your laptop wakes up.**
 
-`cron` and `systemd --user` timers run jobs at a wall-clock time. If your laptop is asleep, docked off the network, or on battery, that window is missed and nothing ever comes back to it. `debrouille` remembers what was due, catches up when you wake up, and skips runs that are too old to be useful.
+If your laptop is closed, suspended, or powered off at the time `cron`, `anacron`, or a `systemd --user` timer was supposed to run, those jobs are simply skipped and never come back. `wakeup` fixes that.
 
-## Why
+## The problem
 
-- **Catches up.** A backup due at 03:00 while you were asleep runs the moment the machine is awake and conditions are met.
-- **Grace window.** If you haven't opened your laptop in a week, `debrouille` won't queue seven nightly backups at once. It advances to the next occurrence and logs a `skip` with the reason.
-- **Respects your machine.** Require AC power, a minimum battery percentage, an idle session, or network connectivity before starting heavy jobs.
-- **Survives reboots.** State is written atomically to disk. `SIGHUP` reloads `config.toml` without restarting a running job.
-- **Runs as a user service.** No root, no system-wide daemon required. Prints a ready-to-use `systemd --user` unit.
+You set up `restic backup` for 03:00 every night. Your laptop sleeps at 02:00 and wakes up at 08:00. Nothing runs. Next night same thing. A week later your backups are silently out of date.
+
+## The solution
+
+`wakeup` keeps track of when each job *should* have run. When your machine comes back online/awake, it checks for missed runs and executes them — but only if they're still relevant.
+
+- **Catch up on wake** - Remembers due times across sleeps/reboots. Runs missed jobs as soon as conditions are met after waking up.
+- **Grace window** - If you haven't used your laptop in 7 days, you probably don't want 7 nightly backups firing all at once. Jobs older than `grace` are skipped and rescheduled to the next slot.
+- **Laptops first** - Can wait for AC power, minimum battery %, idle session (via `logind`/`xprintidle`), or network before running heavy jobs.
+- **No root required** - Runs entirely as a user daemon via `systemd --user`.
+- **Safe by default** - Per-job locking (won't run twice), atomic state writes, logs per job with rotation, timeouts, and `SIGHUP` reload without killing running jobs.
+
+## Install
+
+```bash
+# With Go
+go install github.com/UnsoberDriver/wakeup/cmd/wakeup@latest
+
+# Or build from source
+git clone https://github.com/UnsoberDriver/wakeup
+cd wakeup
+go build ./cmd/wakeup
+```
 
 ## Quick start
 
 ```bash
-# Install
-go install github.com/UnsoberDriver/debrouille/cmd/debrouille@latest
+# Create config
+mkdir -p ~/.config/wakeup
+cp example/config.toml ~/.config/wakeup/config.toml
+$EDITOR ~/.config/wakeup/config.toml
 
-# Create a config
-mkdir -p ~/.config/debrouille
-cp example/config.toml ~/.config/debrouille/config.toml
-$EDITOR ~/.config/debrouille/config.toml
+# Check conditions and config
+wakeup check --explain
 
-# Validate it
-debrouille check --explain
+# Test without starting the daemon
+wakeup daemon --once
 
-# Run once in the foreground (useful for testing)
-debrouille daemon --once
-
-# Or run as a user service
-debrouille systemd > ~/.config/systemd/user/debrouille.service
+# Run as user service (auto-start on login)
+wakeup systemd > ~/.config/systemd/user/wakeup.service
 systemctl --user daemon-reload
-systemctl --user enable --now debrouille.service
+systemctl --user enable --now wakeup.service
+
+# See status
+wakeup status
 ```
 
 ## Example config
@@ -51,33 +69,48 @@ run_missed_on_start = true
 
 [[job]]
 name = "backup"
-every = "24h"
+every = "24h"        # run every 24h from last run
 require_ac = true
+require_network = true
 catch_up = true
-command = "restic backup ~/Documents"
+grace = "18h"
+command = "restic backup --exclude-caches ~/Documents ~/Pictures"
+
+[[job]]
+name = "cleanup"
+schedule = "weekly"
+day = "sunday"
+at = "04:00"       # run every Sunday at 04:00 (catches up if missed)
+require_ac = true
+require_idle = true
+catch_up = true
+command = "journalctl --vacuum-size=500M"
 ```
 
-More examples: [example/config.toml](example/config.toml).
+See [example/config.toml](example/config.toml) for more options.
 
 ## Commands
 
-| Command | Purpose |
+| Command | What it does |
 | --- | --- |
-| `debrouille daemon` | Long-running scheduler loop. `SIGHUP` reloads the config. |
-| `debrouille daemon --once` | Evaluate every job once and exit. |
-| `debrouille status` | Show schedule, last run, next due and state. |
-| `debrouille run <job> [--force]` | Run a job now, skipping the schedule but still respecting conditions unless `--force`. |
-| `debrouille check [--explain]` | Validate the config and inspect power/idle/network conditions. |
-| `debrouille logs <job> [--tail N]` | Show the end of a job's log. |
-| `debrouille systemd` | Print a `systemd --user` unit. |
+| `wakeup daemon` | Start the scheduler. Listens for `SIGHUP` to reload config. |
+| `wakeup daemon --once` | Evaluate all jobs once and exit (great for testing). |
+| `wakeup status` | Table of jobs: schedule, last run, next due, state (`ok`/`due`/`missed`/`failing`). |
+| `wakeup run <job> [--force]` | Run a job immediately. Respects conditions unless `--force`. Updates schedule as if it ran normally. |
+| `wakeup check [--explain]` | Validate config and show AC/battery/idle/network checks. |
+| `wakeup logs <job> [--tail N]` | View recent output from a job's log file. |
+| `wakeup systemd` | Generate a `systemd --user` unit file. |
 
 ## How catch-up works
 
-1. **Remember.** `debrouille` writes `state.json` after every evaluation with the next due time.
-2. **Sleep.** If the daemon is not running, the due date stays the same.
-3. **Wake.** On the next `tick`, `decide` sees `now >= next_due`. If `now - next_due <= grace` it runs (and logs `caught up ... late`). If it's outside the grace window, it skips and advances to `next_due + k*interval` (or the next wall-clock occurrence), so you don't get a flood of missed runs.
-4. **Advance.** For intervals, the next due is calculated by steps from the previous slot (not `now`) to avoid drift.
+1. **Track** - After each run, `wakeup` records `next_due` in `~/.local/state/wakeup/state.json` (atomically written).
+2. **Miss** - If the daemon isn't running while asleep, `next_due` stays in the past.
+3. **Wake & check** - On next tick, it sees the job is due. It checks conditions (AC/idle/network/battery). If blocked, it waits and retries each tick.
+4. **Decide** - If `now - next_due <= grace` → run it (marked "caught up X late"). If `> grace` → skip and advance to the next slot without flooding runs.
+5. **Advance** - For intervals, next due is computed by steps from the previous slot (prevents drift). For daily/weekly, it finds the next occurrence in the future.
+
+State lives in `~/.local/state/wakeup/`, logs in `~/.local/state/wakeup/logs/`. Both are user-writable, no root needed.
 
 ## License
 
-MIT
+[MIT](LICENSE)

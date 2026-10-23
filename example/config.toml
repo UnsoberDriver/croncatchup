@@ -1,0 +1,67 @@
+# Example debrouille configuration
+# Copy to ~/.config/debrouille/config.toml and edit to fit your setup.
+
+[settings]
+# How often the daemon evaluates jobs (default: 30s)
+tick = "30s"
+# How late a missed run may be and still be worth doing (default: 12h)
+grace = "12h"
+# Default timeout for jobs with no per-job timeout (default: 1h)
+timeout = "1h"
+# Shell used to run commands (default: /bin/sh)
+shell = "/bin/sh"
+# Only start jobs when on mains power (global default)
+require_ac = false
+# Do not start if battery is below this percentage (0 = disabled)
+min_battery = 20
+# Require the machine to be idle before starting (works with logind/xprintidle)
+require_idle = false
+# Minimum idle time before a job may start (default: 5m)
+idle_for = "5m"
+# Custom idle check: command exits 0 if idle. Overrides logind/xprintidle.
+# idle_check = "test -f /run/user/$UID/idle"
+# TCP check used to test network reachability (default: 1.1.1.1:53)
+network_check = "1.1.1.1:53"
+# Evaluate jobs immediately when the daemon starts (default: true)
+run_missed_on_start = true
+# Where to store state and logs (defaults follow XDG / ~/.local/state/debrouille)
+# state_dir = "~/.local/state/debrouille"
+# log_dir = "~/.local/state/debrouille/logs"
+
+# Nightly backup with restic. Catches up if the laptop was asleep.
+[[job]]
+name = "backup"
+every = "24h"
+require_ac = true
+require_network = true
+catch_up = true
+grace = "18h"
+command = "restic backup --exclude-caches ~/Documents ~/Pictures"
+
+# Clean package caches once a week on Sunday morning.
+[[job]]
+name = "cleanup"
+schedule = "weekly"
+day = "sunday"
+at = "04:00"
+require_ac = true
+require_idle = true
+catch_up = true
+command = "pkcon refresh && journalctl --vacuum-size=500M || true"
+
+# Sync notes every 6 hours. Can run on battery if above threshold.
+[[job]]
+name = "sync"
+every = "6h"
+require_network = true
+catch_up = true
+grace = "8h"
+command = "rsync -aHAX --delete ~/Notes/ remote:notes/"
+
+# Update a local index every hour. Skip if missed by more than grace.
+[[job]]
+name = "index"
+every = "1h"
+catch_up = true
+grace = "2h"
+command = "updatedb-local || true"

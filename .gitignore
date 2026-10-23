@@ -1,0 +1,12 @@
+# gitignore
+/bin
+/dist
+/debrouille
+*.exe
+*.test
+.coverage
+/state
+/logs
+.DS_Store
+*~
+*.swp
